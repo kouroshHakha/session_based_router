@@ -4,7 +4,7 @@ from ray.serve.context import _get_internal_replica_context
 from ray.serve.deployment import Application
 from ray.serve._private.common import ReplicaID
 
-from cai.session_router import SessionAwareRequestRouter
+from .session_router import SessionAwareRequestRouter
 
 
 from typing import Dict, Any
