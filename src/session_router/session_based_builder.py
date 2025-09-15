@@ -52,6 +52,15 @@ class SessionAwareLLMServer(LLMServer, SesssionAwareMixin):
             engine_method=engine_method,
             batch_output_stream=batch_output_stream,
         )
+        
+    
+    async def completions(self, request):
+        # NOTE: Making the batch_output_stream=False to see if it affects the TPOT performance. 
+        return await self._run_request(
+            request,
+            engine_method="completions",
+            batch_output_stream=False,
+        )
 
 def build(serving_config_dict: Dict[str, Any]) -> Application:
     
