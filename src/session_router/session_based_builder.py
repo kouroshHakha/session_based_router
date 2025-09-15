@@ -5,7 +5,7 @@ from ray.serve.deployment import Application
 from ray.serve._private.common import ReplicaID
 
 from .session_router import SessionAwareRequestRouter
-
+from ray import serve
 
 from typing import Dict, Any
 
@@ -73,8 +73,7 @@ def build(serving_config_dict: Dict[str, Any]) -> Application:
         request_routing_stats_timeout_s=1,
     )
 
-    llm_deployment = SessionAwareLLMServer.as_deployment(
-        deployment_options).bind(llm_config=llm_config)    
+    llm_deployment = serve.deployment(SessionAwareLLMServer).options(**deployment_options).bind(llm_config=llm_config)
     app = LLMRouter.as_deployment(llm_configs=[llm_config]).bind(
         llm_deployments=[llm_deployment])
     return app
