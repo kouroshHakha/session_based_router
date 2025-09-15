@@ -25,6 +25,7 @@ class SesssionAwareMixin:
         return xargs.get("session_id")
     
     def record_routing_stats(self) -> Dict[str, Any]:
+        print(f"[DEBUG] Reporting hot_sessions: {self.hot_sessions}")
         return {
             "hot_sessions": self.hot_sessions
         }
@@ -40,6 +41,7 @@ class SessionAwareLLMServer(LLMServer, SesssionAwareMixin):
     ):
         # from session aware mixin
         session_id = self._parse_session_id(request)
+        print(f"[DEBUG] Session_id={session_id} hit replica {self.replica_id.unique_id}")
         if session_id:
             self.hot_sessions.add(session_id)
         
