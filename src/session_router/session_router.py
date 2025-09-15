@@ -10,7 +10,7 @@ class SessionAwareRequestRouter(PowerOfTwoChoicesRequestRouter):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        print(f"[DEBUG] SessionAwareRequestRouter initialized. Testing 2 ....")
+        print(f"[DEBUG] SessionAwareRequestRouter initialized. Testing 3 ....")
 
 
     def _extract_session_id(self, request: PendingRequest):

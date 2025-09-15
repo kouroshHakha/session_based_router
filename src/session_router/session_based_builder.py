@@ -16,6 +16,8 @@ class SesssionAwareMixin:
         context = _get_internal_replica_context()
         self.replica_id: ReplicaID = context.replica_id
         
+        print(f"[DEBUG] SessionAwareLLMServer initialized on replica {self.replica_id.unique_id}")
+        
         # TODO: Make this a Capped set of size 1000 or sth that has LRU eviction
         self.hot_sessions = set()
         
