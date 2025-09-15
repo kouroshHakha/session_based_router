@@ -16,18 +16,15 @@ class SesssionAwareMixin:
         context = _get_internal_replica_context()
         self.replica_id: ReplicaID = context.replica_id
         
-        print(f"[DEBUG] Inside the constructor of SesssionAwareMixin on replica {self.replica_id.unique_id}")
-        
         # TODO: Make this a Capped set of size 1000 or sth that has LRU eviction
         self.hot_sessions = set()
         
     def _parse_session_id(self, request):
         # Extra args from request
-        xargs = getattr(request, "vllm_xargs", {})
+        xargs = getattr(request, "vllm_xargs", {}) or {}
         return xargs.get("session_id")
     
     def record_routing_stats(self) -> Dict[str, Any]:
-        print(f"[DEBUG] Reporting hot_sessions: {self.hot_sessions}")
         return {
             "hot_sessions": self.hot_sessions
         }
@@ -35,11 +32,8 @@ class SesssionAwareMixin:
 class SessionAwareLLMServer(LLMServer, SesssionAwareMixin):
     
     async def __init__(self, llm_config: LLMConfig):
-        print(f"[DEBUG] Inside the constructor of SessionAwareLLMServer, calling the constructor of LLMServer...")
         await LLMServer.__init__(self, llm_config)
-        print(f"[DEBUG] Inside the constructor of SessionAwareLLMServer, calling the constructor of SesssionAwareMixin...")
         await SesssionAwareMixin.__init__(self)
-        print(f"[DEBUG] Inside the constructor of SessionAwareLLMServer, done.")
         
     async def _run_request(
         self,
@@ -50,7 +44,6 @@ class SessionAwareLLMServer(LLMServer, SesssionAwareMixin):
     ):
         # from session aware mixin
         session_id = self._parse_session_id(request)
-        print(f"[DEBUG] Session_id={session_id} hit replica {self.replica_id.unique_id}")
         if session_id:
             self.hot_sessions.add(session_id)
         

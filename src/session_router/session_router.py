@@ -10,7 +10,7 @@ class SessionAwareRequestRouter(PowerOfTwoChoicesRequestRouter):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        print(f"[DEBUG] SessionAwareRequestRouter initialized. Testing 3 ....")
+        print(f"[DEBUG] SessionAwareRequestRouter initialized.")
 
 
     def _extract_session_id(self, request: PendingRequest):
@@ -37,13 +37,9 @@ class SessionAwareRequestRouter(PowerOfTwoChoicesRequestRouter):
                 routing_stats = replica.routing_stats
                 if not routing_stats:
                     continue
-                
                 hot_sessions = routing_stats.get('hot_sessions', set())
-                print(f"[DEBUG] hot_sessions: {hot_sessions}")
                 if session_id in hot_sessions:
-                    print(f"[DEBUG] Found a match for session_id: {session_id}, on replica {replica.replica_id.unique_id}")
                     return replica
-        print(f"[DEBUG] Session_id={session_id} not found for request: {pending_request}")
         return None
     
     
