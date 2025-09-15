@@ -79,8 +79,6 @@ def build(serving_config_dict: Dict[str, Any]) -> Application:
         request_routing_stats_period_s=2,
         request_routing_stats_timeout_s=1,
     )
-    
-    a = 1 / 0
 
     llm_deployment = serve.deployment(SessionAwareLLMServer).options(**deployment_options).bind(llm_config=llm_config)
     app = LLMRouter.as_deployment(llm_configs=[llm_config]).bind(
