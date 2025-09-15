@@ -32,8 +32,9 @@ class SesssionAwareMixin:
             "hot_sessions": self.hot_sessions
         }
 
-class SessionAwareLLMServer(LLMServer, SesssionAwareMixin):
+class SessionAwareLLMServer(SesssionAwareMixin, LLMServer):
     async def __init__(self):
+        a = 1 / 0
         await LLMServer.__init__(self)
         await SesssionAwareMixin.__init__(self)
         print(f"[DEBUG] Inside the constructor of SessionAwareLLMServer ...")
