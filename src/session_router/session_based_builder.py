@@ -61,6 +61,14 @@ class SessionAwareLLMServer(LLMServer, SesssionAwareMixin):
             engine_method="completions",
             batch_output_stream=False,
         )
+        
+    async def chat(self, request):
+        # NOTE: Making the batch_output_stream=False to see if it affects the TPOT performance. 
+        return await self._run_request(
+            request,
+            engine_method="chat",
+            batch_output_stream=False,
+        )
 
 def build(serving_config_dict: Dict[str, Any]) -> Application:
     
