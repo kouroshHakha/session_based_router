@@ -16,7 +16,7 @@ class SesssionAwareMixin:
         context = _get_internal_replica_context()
         self.replica_id: ReplicaID = context.replica_id
         
-        print(f"[DEBUG] SessionAwareLLMServer initialized on replica {self.replica_id.unique_id}")
+        print(f"[DEBUG] Inside the constructor of SesssionAwareMixin on replica {self.replica_id.unique_id}")
         
         # TODO: Make this a Capped set of size 1000 or sth that has LRU eviction
         self.hot_sessions = set()
@@ -33,6 +33,10 @@ class SesssionAwareMixin:
         }
 
 class SessionAwareLLMServer(LLMServer, SesssionAwareMixin):
+    async def __init__(self):
+        await LLMServer.__init__(self)
+        await SesssionAwareMixin.__init__(self)
+        print(f"[DEBUG] Inside the constructor of SessionAwareLLMServer ...")
         
     async def _run_request(
         self,
