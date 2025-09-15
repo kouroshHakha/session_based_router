@@ -32,8 +32,15 @@ class SesssionAwareMixin:
             "hot_sessions": self.hot_sessions
         }
 
-class SessionAwareLLMServer(SesssionAwareMixin, LLMServer):
-
+class SessionAwareLLMServer(LLMServer, SesssionAwareMixin):
+    
+    async def __init__(self, llm_config: LLMConfig):
+        print(f"[DEBUG] Inside the constructor of SessionAwareLLMServer, calling the constructor of LLMServer...")
+        await LLMServer.__init__(self, llm_config)
+        print(f"[DEBUG] Inside the constructor of SessionAwareLLMServer, calling the constructor of SesssionAwareMixin...")
+        await SesssionAwareMixin.__init__(self)
+        print(f"[DEBUG] Inside the constructor of SessionAwareLLMServer, done.")
+        
     async def _run_request(
         self,
         request,
