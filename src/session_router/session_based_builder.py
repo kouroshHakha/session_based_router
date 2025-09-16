@@ -5,6 +5,7 @@ from ray.serve.deployment import Application
 from ray.serve._private.common import ReplicaID
 
 from .session_router import SessionAwareRequestRouter
+from .http_header_llm_router import HttpHeaderLLMRouter
 from ray import serve
 
 from typing import Dict, Any
@@ -93,6 +94,6 @@ def build(serving_config_dict: Dict[str, Any]) -> Application:
     )
 
     llm_deployment = serve.deployment(SessionAwareLLMServer).options(**deployment_options).bind(llm_config=llm_config)
-    app = LLMRouter.as_deployment(llm_configs=[llm_config]).bind(
+    app = HttpHeaderLLMRouter.as_deployment(llm_configs=[llm_config]).bind(
         llm_deployments=[llm_deployment])
     return app
