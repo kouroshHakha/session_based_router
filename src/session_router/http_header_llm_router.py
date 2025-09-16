@@ -528,7 +528,7 @@ class HttpHeaderLLMRouter:
                 return JSONResponse(content=result.model_dump())
 
     @http_header_fastapi_router_app.post("/v1/score")
-    async def score(self, body: "ScoreRequest") -> Response:
+    async def score(self, body) -> Response:
         """Create scores for the provided text pairs.
 
         Note: This is a vLLM specific endpoint.
@@ -607,16 +607,7 @@ class HttpHeaderLLMRouter:
                 model_max_replicas * DEFAULT_ROUTER_TO_MODEL_REPLICA_RATIO
             )
 
-        # Use a builder function to avoid circular dependency during pickling
-        def build_fastapi_app():
-            # Create a new app instance and copy routes from the global app
-            new_app = init()
-            # Copy routes from the global app that has the decorators
-            for route in http_header_fastapi_router_app.routes:
-                new_app.routes.append(route)
-            return new_app
-        
-        ingress_cls = serve.ingress(build_fastapi_app)(cls)
+        ingress_cls = serve.ingress(http_header_fastapi_router_app)(cls)
         deployment_decorator = serve.deployment(
             autoscaling_config={
                 "min_replicas": min_replicas,

@@ -6,9 +6,14 @@ from ray.serve._private.common import ReplicaID
 
 from .session_router import SessionAwareRequestRouter
 from .http_header_llm_router import HttpHeaderLLMRouter
+from .session_store import get_request_session_mapping, delete_request_session_mapping
 from ray import serve
 
 from typing import Dict, Any
+
+import logging
+logger = logging.getLogger(__name__)
+
 
 class SesssionAwareMixin:
     
@@ -21,9 +26,18 @@ class SesssionAwareMixin:
         self.hot_sessions = set()
         
     def _parse_session_id(self, request):
-        # Extra args from request
-        xargs = getattr(request, "vllm_xargs", {}) or {}
-        return xargs.get("session_id")
+        # Extract request_id from request to look up session_id in global store
+        request_id = getattr(request, 'request_id', None)
+        
+        if request_id:
+            session_id = get_request_session_mapping(request_id)
+            if session_id:
+                # Delete the mapping after use to clean up
+                logger.info(f"Found session_id={session_id} for request_id={request_id} from session store")
+                delete_request_session_mapping(request_id)
+                return session_id
+
+        return None
     
     def record_routing_stats(self) -> Dict[str, Any]:
         return {

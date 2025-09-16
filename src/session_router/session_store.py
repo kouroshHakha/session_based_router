@@ -4,9 +4,10 @@ from fastapi import Request
 
 
 @ray.remote
-class SessionStore:
+class SessionManager:
     def __init__(self):
         self._request_session_mappings: Dict[str, str] = {}
+        self._session_replica_mappings: Dict[str, str] = {}
     
     def store_mapping(self, request_id: str, session_id: str) -> None:
         """Store a request ID to session ID mapping."""
@@ -20,39 +21,57 @@ class SessionStore:
         """Delete a request ID to session ID mapping."""
         self._request_session_mappings.pop(request_id, None)
     
-    def get_all_mappings(self) -> Dict[str, str]:
-        """Get all current mappings (for debugging)."""
-        return self._request_session_mappings.copy()
+    def get_replica_for_session(self, session_id: str) -> Optional[str]:
+        """Get replica ID for a given session ID."""
+        return self._session_replica_mappings.get(session_id)
+    
+    def associate_session_with_replica(self, session_id: str, replica_id: str) -> None:
+        """Associate a session ID with a replica ID."""
+        self._session_replica_mappings[session_id] = replica_id
 
+    # We also need to handle the case where the replica handling a session dies
+    
 
-SESSION_STORE_ACTOR_NAME = "session_store"
+SESSION_MANAGER_ACTOR_NAME = "session_manager"
 
-def get_session_store():
-    """Get or create the detached session store actor."""
+def get_session_manager():
+    """Get or create the detached session manager actor."""
     try:
         # Try to get existing detached actor
-        return ray.get_actor(SESSION_STORE_ACTOR_NAME)
+        return ray.get_actor(SESSION_MANAGER_ACTOR_NAME)
     except ValueError:
         # Actor doesn't exist, create a new detached one
-        return SessionStore.options(name=SESSION_STORE_ACTOR_NAME, lifetime="detached").remote()
+        return SessionManager.options(name=SESSION_MANAGER_ACTOR_NAME, lifetime="detached").remote()
 
 
 def store_request_session_mapping(request_id: str, session_id: str) -> None:
     """Store a request ID to session ID mapping."""
-    store = get_session_store()
-    ray.get(store.store_mapping.remote(request_id, session_id))
+    manager = get_session_manager()
+    ray.get(manager.store_mapping.remote(request_id, session_id))
 
 
 def get_request_session_mapping(request_id: str) -> Optional[str]:
     """Get session ID for a given request ID."""
-    store = get_session_store()
-    return ray.get(store.get_mapping.remote(request_id))
+    manager = get_session_manager()
+    return ray.get(manager.get_mapping.remote(request_id))
 
 
 def delete_request_session_mapping(request_id: str) -> None:
     """Delete a request ID to session ID mapping."""
-    store = get_session_store()
-    ray.get(store.delete_mapping.remote(request_id))
+    manager = get_session_manager()
+    ray.get(manager.delete_mapping.remote(request_id))
+
+
+def get_replica_for_session(session_id: str) -> Optional[str]:
+    """Get replica ID for a given session ID."""
+    manager = get_session_manager()
+    return ray.get(manager.get_replica_for_session.remote(session_id))
+
+
+def associate_session_with_replica(session_id: str, replica_id: str) -> None:
+    """Associate a session ID with a replica ID."""
+    manager = get_session_manager()
+    ray.get(manager.associate_session_with_replica.remote(session_id, replica_id))
 
 
 def extract_session_id_from_cookie(request: Request) -> Optional[str]:
