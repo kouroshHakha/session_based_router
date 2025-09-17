@@ -93,6 +93,7 @@ def build(serving_config_dict: Dict[str, Any]) -> Application:
     )
 
     llm_deployment = serve.deployment(SessionAwareLLMServer).options(**deployment_options).bind(llm_config=llm_config)
-    app = LLMRouter.as_deployment(llm_configs=[llm_config]).bind(
+    app = LLMRouter.as_deployment(
+        llm_configs=[llm_config]).options(max_replicas_per_node=4).bind(
         llm_deployments=[llm_deployment])
     return app
