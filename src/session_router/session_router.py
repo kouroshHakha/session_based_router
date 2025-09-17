@@ -6,7 +6,7 @@ from ray.serve._private.common import ReplicaID
 from ray.serve.handle import ReplicaResult
 
 from typing import List, Optional
-from .session_store import get_request_session_mapping, delete_request_session_mapping, get_replica_for_session, associate_session_with_replica
+from .session_store import get_replica_for_session, associate_session_with_replica
 
 import logging
 logger = logging.getLogger(__name__)
@@ -28,12 +28,13 @@ class SessionAwareRequestRouter(PowerOfTwoChoicesRequestRouter):
                 break
         
         if request_id:
-            session_id = get_request_session_mapping(request_id)
+            # session_id = get_request_session_mapping(request_id)
+            session_id = arg.vllm_xargs.get("session_id")
             if session_id:
                 logger.info(f"Session ID extracted from request: session_id={session_id}, request_id={request_id}")
-                if delete_mapping:
-                    # Delete the mapping after use to clean up
-                    delete_request_session_mapping(request_id)
+                # if delete_mapping:
+                #     # Delete the mapping after use to clean up
+                #     delete_request_session_mapping(request_id)
                 return session_id
         
 

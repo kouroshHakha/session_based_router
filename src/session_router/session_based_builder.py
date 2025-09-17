@@ -6,7 +6,6 @@ from ray.serve._private.common import ReplicaID
 
 from .session_router import SessionAwareRequestRouter
 from .http_header_llm_router import HttpHeaderLLMRouter
-from .session_store import get_request_session_mapping, delete_request_session_mapping
 from ray import serve
 
 from typing import Dict, Any
@@ -29,13 +28,13 @@ class SesssionAwareMixin:
         # Extract request_id from request to look up session_id in global store
         request_id = getattr(request, 'request_id', None)
         
-        if request_id:
-            session_id = get_request_session_mapping(request_id)
-            if session_id:
-                # Delete the mapping after use to clean up
-                logger.info(f"Found session_id={session_id} for request_id={request_id} from session store")
-                delete_request_session_mapping(request_id)
-                return session_id
+        # if request_id:
+        #     session_id = get_request_session_mapping(request_id)
+        #     if session_id:
+        #         # Delete the mapping after use to clean up
+        #         logger.info(f"Found session_id={session_id} for request_id={request_id} from session store")
+        #         delete_request_session_mapping(request_id)
+        #         return session_id
 
         return None
     
@@ -58,9 +57,9 @@ class SessionAwareLLMServer(LLMServer, SesssionAwareMixin):
         batch_output_stream: bool = False,
     ):
         # from session aware mixin
-        session_id = self._parse_session_id(request)
-        if session_id:
-            self.hot_sessions.add(session_id)
+        # session_id = self._parse_session_id(request)
+        # if session_id:
+        #     self.hot_sessions.add(session_id)
         
         return await super()._run_request(
             request,

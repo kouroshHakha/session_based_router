@@ -82,7 +82,7 @@ logger = get_logger(__name__)
 
 T = TypeVar("T")
 
-from .session_store import store_request_session_mapping, extract_session_id_from_cookie
+from .session_store import extract_session_id_from_cookie
 
 
 def _sanitize_chat_completion_request(
@@ -481,7 +481,8 @@ class HttpHeaderLLMRouter:
             logger.info(f"Session ID detected in completions request: {session_id}, request_id: {request_id}")
         
         if request_id and session_id:
-            store_request_session_mapping(request_id, session_id)
+            # store_request_session_mapping(request_id, session_id)
+            body.vllm_xargs = {"session_id": session_id}
             logger.info(f"Stored request-session mapping: request_id={request_id}, session_id={session_id}")
         
         return await self._process_llm_request(body, is_chat=False)
@@ -502,7 +503,8 @@ class HttpHeaderLLMRouter:
             logger.info(f"Session ID detected in chat request: {session_id}, request_id: {request_id}")
         
         if request_id and session_id:
-            store_request_session_mapping(request_id, session_id)
+            # store_request_session_mapping(request_id, session_id)
+            body.vllm_xargs = {"session_id": session_id}
             logger.info(f"Stored request-session mapping: request_id={request_id}, session_id={session_id}")
         
         return await self._process_llm_request(body, is_chat=True)
