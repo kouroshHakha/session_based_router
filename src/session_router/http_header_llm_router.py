@@ -475,7 +475,8 @@ class HttpHeaderLLMRouter:
         """
         # Extract request ID from the request body and session ID from cookie
         request_id = getattr(body, 'request_id', None)
-        session_id = extract_session_id_from_cookie(request)
+        # session_id = extract_session_id_from_cookie(request)
+        session_id = getattr(body, 'user', None)
         
         if session_id:
             logger.info(f"Session ID detected in completions request: {session_id}, request_id: {request_id}")
@@ -496,7 +497,8 @@ class HttpHeaderLLMRouter:
         """
         # Extract request ID from the request body and session ID from cookie
         request_id = getattr(body, 'request_id', None)
-        session_id = extract_session_id_from_cookie(request)
+        # session_id = extract_session_id_from_cookie(request)
+        session_id = getattr(body, 'user', None)
         
         if session_id:
             logger.info(f"Session ID detected in chat request: {session_id}, request_id: {request_id}")
