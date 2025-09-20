@@ -18,23 +18,17 @@ class SessionAwareRequestRouter(PowerOfTwoChoicesRequestRouter):
         print(f"[DEBUG] SessionAwareRequestRouter initialized.")
 
 
-    def _extract_session_id(self, request: PendingRequest, delete_mapping: bool = False):
-        request_id = None
-        
-        # Extract request_id from the request args (ChatCompletionRequest or CompletionRequest)
+    def _extract_session_id(self, request: PendingRequest):
         for arg in request.args:
-            if hasattr(arg, 'request_id') and arg.request_id:
-                request_id = arg.request_id
-                break
-        
-        if request_id:
-            session_id = get_request_session_mapping(request_id)
-            if session_id:
-                logger.info(f"Session ID extracted from request: session_id={session_id}, request_id={request_id}")
-                if delete_mapping:
-                    # Delete the mapping after use to clean up
-                    delete_request_session_mapping(request_id)
-                return session_id
+            xargs = None
+            if isinstance(arg, dict):
+                xargs = arg.get("vllm_xargs", {})
+            else:
+                xargs = getattr(arg, "vllm_xargs", {})
+            if xargs: 
+                return xargs.get("session_id")
+
+        return None
         
 
     def _find_matched_replica(self, candidate_replicas: List[RunningReplica], pending_request: Optional[PendingRequest]) -> Optional[RunningReplica]:
@@ -46,20 +40,9 @@ class SessionAwareRequestRouter(PowerOfTwoChoicesRequestRouter):
         
         session_id = self._extract_session_id(pending_request)
         if session_id:
-            logger.info(f"Looking for replica with session ID: {session_id}")
+            candidate_replicas.sort(key=lambda x: x.replica_id.to_full_id_str())
+            return candidate_replicas[hash(session_id) % len(candidate_replicas)]
             
-            # Check if we have a stored mapping
-            replica_id = get_replica_for_session(session_id)
-            if replica_id:
-                logger.info(f"Found stored replica mapping for session {session_id}: replica_id={replica_id}")
-                # Find the replica with this ID among candidates
-                for replica in candidate_replicas:
-                    if replica.replica_id.to_full_id_str() == replica_id:
-                        logger.info(f"Found matching replica from stored mapping: replica_id={replica.replica_id}")
-                        return replica
-                logger.info(f"Stored replica {replica_id} not in candidate list")
-            
-            logger.info(f"No matching replica found for session ID: {session_id}")
         return None
     
     
@@ -79,27 +62,27 @@ class SessionAwareRequestRouter(PowerOfTwoChoicesRequestRouter):
         # Fallback to PowerOfTwoChoicesRequestRouter
         return await super().choose_replicas(candidate_replicas, pending_request)
     
-    def on_request_routed(
-        self,
-        pending_request: PendingRequest,
-        replica_id: ReplicaID,
-        result: ReplicaResult,
-    ):
-        """Called when a request is routed to a replica.
+    # def on_request_routed(
+    #     self,
+    #     pending_request: PendingRequest,
+    #     replica_id: ReplicaID,
+    #     result: ReplicaResult,
+    # ):
+    #     """Called when a request is routed to a replica.
         
-        Associates the session ID with the replica ID if they don't already have a mapping.
-        """
-        session_id = self._extract_session_id(pending_request, delete_mapping=True)
-        replica_id_str = replica_id.to_full_id_str()
-        if session_id:
-            # Check if we already have a mapping for this session
-            existing_replica = get_replica_for_session(session_id)
-            if not existing_replica:
-                # Associate this session with the replica it was routed to
-                logger.info(f"Associating session {session_id} with replica {replica_id_str}")
-                associate_session_with_replica(session_id, replica_id_str)
-            else:
-                logger.info(f"Session {session_id} already associated with replica {existing_replica}")
+    #     Associates the session ID with the replica ID if they don't already have a mapping.
+    #     """
+    #     session_id = self._extract_session_id(pending_request)
+    #     replica_id_str = replica_id.to_full_id_str()
+    #     if session_id:
+    #         # Check if we already have a mapping for this session
+    #         existing_replica = get_replica_for_session(session_id)
+    #         if not existing_replica:
+    #             # Associate this session with the replica it was routed to
+    #             logger.info(f"Associating session {session_id} with replica {replica_id_str}")
+    #             associate_session_with_replica(session_id, replica_id_str)
+    #         else:
+    #             logger.info(f"Session {session_id} already associated with replica {existing_replica}")
         
-        # Call parent implementation
-        super().on_request_routed(pending_request, replica_id, result)
+    #     # Call parent implementation
+    #     super().on_request_routed(pending_request, replica_id, result)
