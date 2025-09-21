@@ -482,12 +482,6 @@ class HttpHeaderLLMRouter:
             body.vllm_xargs = {
                 "session_id": session_id
             }
-<<<<<<< HEAD
-            logger.info(f"Stored request-session mapping: request_id={request_id}, session_id={session_id}")
-        
-=======
-
->>>>>>> 2a1e1ae (Use deterministic hash)
         return await self._process_llm_request(body, is_chat=False)
 
     @http_header_fastapi_router_app.post("/v1/chat/completions")
@@ -504,20 +498,10 @@ class HttpHeaderLLMRouter:
         
         if session_id:
             logger.info(f"Session ID detected in chat request: {session_id}, request_id: {request_id}")
-<<<<<<< HEAD
-        
-        if request_id and session_id:
-            body.vllm_xargs = {
-                "session_id": session_id
-            }
-            logger.info(f"Stored request-session mapping: request_id={request_id}, session_id={session_id}")
-        
-=======
             body.vllm_xargs = {
                 "session_id": session_id
             }
 
->>>>>>> 2a1e1ae (Use deterministic hash)
         return await self._process_llm_request(body, is_chat=True)
 
     @http_header_fastapi_router_app.post("/v1/embeddings")
