@@ -9,6 +9,7 @@ from typing import List, Optional
 from .session_store import get_request_session_mapping, delete_request_session_mapping, get_replica_for_session, associate_session_with_replica
 
 import logging
+import hashlib
 logger = logging.getLogger(__name__)
 
 class SessionAwareRequestRouter(PowerOfTwoChoicesRequestRouter):
@@ -47,9 +48,9 @@ class SessionAwareRequestRouter(PowerOfTwoChoicesRequestRouter):
         logger.info(f"[DEBUG] Session-aware routing: session_id={session_id}")
         if session_id:
             candidate_replicas.sort(key=lambda x: x.replica_id.to_full_id_str())
-            replica = candidate_replicas[hash(session_id) % len(candidate_replicas)]
-            logger.info(f"[DEBUG] Session-aware routing: replica_id={replica.replica_id}")
-            return replica
+
+            index = int(hashlib.md5(session_id.encode()).hexdigest(), 16)
+            return candidate_replicas[index % len(candidate_replicas)]
             
         return None
     
