@@ -6,7 +6,6 @@ from ray.serve._private.common import ReplicaID
 
 from .session_router import SessionAwareRequestRouter
 from .http_header_llm_router import HttpHeaderLLMRouter
-from .session_store import get_request_session_mapping, delete_request_session_mapping
 from ray import serve
 
 from typing import Dict, Any

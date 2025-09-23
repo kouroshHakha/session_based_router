@@ -6,7 +6,6 @@ from ray.serve._private.common import ReplicaID
 from ray.serve.handle import ReplicaResult
 
 from typing import List, Optional
-from .session_store import get_request_session_mapping, delete_request_session_mapping, get_replica_for_session, associate_session_with_replica
 
 import logging
 import hashlib

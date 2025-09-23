@@ -82,7 +82,7 @@ logger = get_logger(__name__)
 
 T = TypeVar("T")
 
-from .session_store import store_request_session_mapping, extract_session_id_from_cookie
+from .session_store import extract_session_id_from_cookie
 
 
 def _sanitize_chat_completion_request(
