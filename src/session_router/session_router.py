@@ -72,27 +72,3 @@ class SessionAwareRequestRouter(PowerOfTwoChoicesRequestRouter):
         logger.info(f"Using fallback routing: candidate_replicas={candidate_replicas}")
         return await super().choose_replicas(candidate_replicas, pending_request)
     
-    # def on_request_routed(
-    #     self,
-    #     pending_request: PendingRequest,
-    #     replica_id: ReplicaID,
-    #     result: ReplicaResult,
-    # ):
-    #     """Called when a request is routed to a replica.
-        
-    #     Associates the session ID with the replica ID if they don't already have a mapping.
-    #     """
-    #     session_id = self._extract_session_id(pending_request)
-    #     replica_id_str = replica_id.to_full_id_str()
-    #     if session_id:
-    #         # Check if we already have a mapping for this session
-    #         existing_replica = get_replica_for_session(session_id)
-    #         if not existing_replica:
-    #             # Associate this session with the replica it was routed to
-    #             logger.info(f"Associating session {session_id} with replica {replica_id_str}")
-    #             associate_session_with_replica(session_id, replica_id_str)
-    #         else:
-    #             logger.info(f"Session {session_id} already associated with replica {existing_replica}")
-        
-    #     # Call parent implementation
-    #     super().on_request_routed(pending_request, replica_id, result)

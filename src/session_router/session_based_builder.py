@@ -15,76 +15,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SesssionAwareMixin:
-    
-    async def __init__(self):
-        
-        context = _get_internal_replica_context()
-        self.replica_id: ReplicaID = context.replica_id
-        
-        # TODO: Make this a Capped set of size 1000 or sth that has LRU eviction
-        self.hot_sessions = set()
-        
-    def _parse_session_id(self, request):
-        # Extract request_id from request to look up session_id in global store
-        request_id = getattr(request, 'request_id', None)
-        
-        if request_id:
-            session_id = get_request_session_mapping(request_id)
-            if session_id:
-                # Delete the mapping after use to clean up
-                logger.info(f"Found session_id={session_id} for request_id={request_id} from session store")
-                delete_request_session_mapping(request_id)
-                return session_id
-
-        return None
-    
-    def record_routing_stats(self) -> Dict[str, Any]:
-        return {
-            "hot_sessions": self.hot_sessions
-        }
-
-class SessionAwareLLMServer(LLMServer, SesssionAwareMixin):
-    
-    async def __init__(self, llm_config: LLMConfig):
-        await LLMServer.__init__(self, llm_config)
-        await SesssionAwareMixin.__init__(self)
-        
-    async def _run_request(
-        self,
-        request,
-        *,
-        engine_method: str,
-        batch_output_stream: bool = False,
-    ):
-        # from session aware mixin
-        session_id = self._parse_session_id(request)
-        if session_id:
-            self.hot_sessions.add(session_id)
-        
-        return await super()._run_request(
-            request,
-            engine_method=engine_method,
-            batch_output_stream=batch_output_stream,
-        )
-        
-    
-    async def completions(self, request):
-        # NOTE: Making the batch_output_stream=False to see if it affects the TPOT performance. 
-        return await self._run_request(
-            request,
-            engine_method="completions",
-            batch_output_stream=False,
-        )
-        
-    async def chat(self, request):
-        # NOTE: Making the batch_output_stream=False to see if it affects the TPOT performance. 
-        return await self._run_request(
-            request,
-            engine_method="chat",
-            batch_output_stream=False,
-        )
-
 def build(serving_config_dict: Dict[str, Any]) -> Application:
     
     llm_configs = serving_config_dict["llm_configs"]
@@ -103,11 +33,9 @@ def build(serving_config_dict: Dict[str, Any]) -> Application:
     # Update the deployment option with the session aware request router
     deployment_options["request_router_config"] = RequestRouterConfig(
         request_router_class=SessionAwareRequestRouter,
-        request_routing_stats_period_s=2,
-        request_routing_stats_timeout_s=1,
     )
 
-    llm_deployment = serve.deployment(SessionAwareLLMServer).options(**deployment_options).bind(llm_config=llm_config)
+    llm_deployment = serve.deployment(LLMServer).options(**deployment_options).bind(llm_config=llm_config)
     app = HttpHeaderLLMRouter.as_deployment(llm_configs=[llm_config]).bind(
         llm_deployments=[llm_deployment])
     return app
